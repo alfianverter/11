@@ -1,0 +1,93 @@
+const Discord = require('discord.js');
+const { PREFIX, GOOGLE_API_KEY } = require('./config.js');
+const YouTube = require('simple-youtube-api');
+const ytdl = require('ytdl-core');
+const DBL = require("dblapi.js");
+const fs = require("fs");
+const prefix = 'un#';
+
+const bot = new Discord.Client();
+const client = new Discord.Client();
+
+const dbl = new DBL('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjQ0NTAzNTA5Mzg5NTkzODA1MyIsImJvdCI6dHJ1ZSwiaWF0IjoxNTI2MzI3NzUwfQ.IHGZg-gblWfvwjXGLRsdl-tunT9QqJ2LsondMan4-MU', client);
+
+const youtube = new YouTube(GOOGLE_API_KEY);
+
+const queue = new Map();
+
+client.on("ready", async () => {
+    function randomStatus() {
+      
+      let status = [`${client.guilds.size} guilds.`, `${client.guilds.reduce((a, b) => a + b.memberCount, 0).toLocaleString()} users.`, "un#help | Beta", "Music with my users."]
+         
+        let rstatus = Math.floor(Math.random() * status.length);
+       
+      bot.user.setActivity(status[rstatus], {
+      type: "PUKI"
+      });
+  setInterval(randomStatus, 30000)
+    };
+  setInterval(() => {
+      
+    dbl.postStats(bot.guilds.size);
+    }, 1800000);
+   
+  console.log("Bot berhasil dinyalakan.");
+})
+
+client.on("guildCreate", guild => {
+  console.log(`Invited bot to: ${guild.name}, owned by ${guild.owner.user.username}!`)
+});
+
+client.on("guildDelete", guild => {
+  console.log(`Kicked from: ${guild.name}. RIP.`)
+});
+
+client.on('disconnect', () => console.log('I just disconnected, making sure you know, I will reconnect now...'));
+
+client.on('reconnecting', () => console.log('I am reconnecting now!'));
+
+client.on('message', async msg => { // eslint-disable-line
+    if (msg.author.bot) return undefined;
+    if (!msg.content.startsWith(PREFIX)) return undefined;
+
+    const args = msg.content.split(' ');
+    const searchString = args.slice(1).join(' ');
+    const url = args[1] ? args[1].replace(/<(.+)>/g, '$1') : '';
+    const serverQueue = queue.get(msg.guild.id);
+
+    let command = msg.content.toLowerCase().split(' ')[0];
+    command = command.slice(PREFIX.length)
+  client.on('message', message => { // This will run every time a message is recieved, sending it the message object.
+ 
+  // Variables
+  let msg = message.content.toUpperCase(); // This takes the message.content, and turns it all uppercase.
+  let sender = message.author; // This variable holds the message's author.
+  let args = message.content.slice(prefix.length).trim().split(' '); // This variable takes the message.content, slices off the prefix from the front, then trims the blank spaces on the side, and turns it into an array by separating it by spaces.
+  let cmd = args.shift().toLowerCase(); // This variable holds the first item from the args array, which is taken off of the args array and turned into lowercase.
+ 
+  // Return Statements
+  if (!msg.startsWith(prefix)) return; // If the message doesn't start with the prefix, exit the code.
+  if (message.author.bot) return; // If the message's author is a bot, exit the code.
+    if (message.channel.type === 'dm') return
+  
+ 
+  // Command Handler
+  try { // This will run first, it will 'try' to run this code
+   
+    let commandFile = require(`./cmds/${cmd}.js`); // This will create a requirement of the given file.
+    commandFile.run(client, message, args); // This will attempt to run the file you just fetched. Now, we can add it to things to pass when running commands, so this means the functions.js file will automatically be added to the commands.
+   
+  } catch (e) { // This will run if it encounters an error, such as the command not being found.
+   
+    console.log(e.message); // This will log the error in console.
+   
+  } finally { // This will run after the try and/or the catch is run.
+   
+    console.log(`${message.author.tag} menjalankan perintah: ${cmd}`); // This logs in console that a user ran a command.
+   
+  }
+  });
+})
+
+client.login(process.env.TOKEN);
